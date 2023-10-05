@@ -44,6 +44,7 @@ class NoteServiceTest {
         user1.setFirstName("Aaron Joseph");
         user1.setMiddleName("Nocon");
         user1.setLastName("Carillo");
+        user1.setPassword("@Password1");
         user1.setEnabled(true);
         user1.setRole("admin");
 
