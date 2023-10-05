@@ -19,11 +19,16 @@ public class NoteController {
         this.noteService = noteService;
         this.noteToNoteDtoConverter = noteToNoteDtoConverter;
     }
-    @GetMapping("/findNoteById/{noteId}")
-    public Result findNoteById(@PathVariable String noteId) {
+    @GetMapping("/findNoteByNoteId/{noteId}")
+    public Result findNoteByNoteId(@PathVariable String noteId) {
         Note foundNote= this.noteService.findById(noteId);
         NoteDto noteDto = noteToNoteDtoConverter.convert(foundNote);
-        return new Result(true, StatusCode.SUCCESS, "FindNoteById Success", noteDto);
+        return new Result(true, StatusCode.SUCCESS, "FindNoteByNoteId Success", noteDto);
+    }
+
+    @GetMapping("/findAllNotesByOwnerId/{ownerId}")
+    public Result findAllNotesByOwnerId(@PathVariable String ownerId) {
+        return null;
     }
 
 }

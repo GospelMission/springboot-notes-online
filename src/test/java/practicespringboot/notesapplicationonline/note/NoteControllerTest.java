@@ -4,6 +4,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +14,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+
+import practicespringboot.notesapplicationonline.system.StatusCode;
+import practicespringboot.notesapplicationonline.system.exception.ObjectNotFoundException;
 import practicespringboot.notesapplicationonline.user.Users;
 import practicespringboot.notesapplicationonline.user.UsersRepository;
 import practicespringboot.notesapplicationonline.user.UsersService;
@@ -20,6 +24,7 @@ import practicespringboot.notesapplicationonline.user.UsersService;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
@@ -27,7 +32,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ExtendWith(MockitoExtension.class)
 class NoteControllerTest {
     @Value("${api.endpoint.base-url}/notes")
     String baseUrl;
@@ -35,8 +39,6 @@ class NoteControllerTest {
     MockMvc mockMvc;
     @MockBean
     NoteService noteService;
-    @MockBean
-    UsersRepository usersRepository;
 
     List<Note> notes;
     @BeforeEach
@@ -67,19 +69,27 @@ class NoteControllerTest {
     }
 
     @Test
-    void testFindNoteByIdSuccess() throws Exception {
-        Note note1 = this.notes.get(0);
+    void testFindNoteByNoteIdSuccess() throws Exception {
         //Given
-        given(this.noteService.findById("1")).willReturn(note1);
+        given(this.noteService.findById("1")).willReturn(this.notes.get(0));
 
         //When and Then
-        this.mockMvc.perform(get(this.baseUrl + "/findNoteById/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(this.baseUrl + "/findNoteByNoteId/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
-                .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.message").value("FindNoteById Success"))
+                .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                .andExpect(jsonPath("$.message").value("FindNoteByNoteId Success"))
                 .andExpect(jsonPath("$.data.id").value("1"));
+    }
 
+    @Test
+    void testFindNoteByNoteIdNotFound() throws Exception {
+        //Given
+        given(this.noteService.findById("-1")).willThrow(new ObjectNotFoundException(Note.class, "-1"));
 
-
+        //When and Then
+        this.mockMvc.perform(get(this.baseUrl + "/findNoteByNoteId/-1").accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
+                .andExpect(jsonPath("$.message").value("Could not find Note with Id -1"));
     }
 }

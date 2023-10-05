@@ -11,7 +11,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import practicespringboot.notesapplicationonline.system.exception.ObjectNotFoundException;
 import practicespringboot.notesapplicationonline.user.Users;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,17 +30,10 @@ class NoteServiceTest {
     @InjectMocks
     NoteService noteService;
 
+    List<Note> notes;
+
     @BeforeEach
     void setUp() {
-    }
-
-    @AfterEach
-    void tearDown() {
-    }
-
-    @Test
-    void testFindByIdSuccess() {
-        //Given
         Users user1 = new Users();
         user1.setId(1);
         user1.setFirstName("Aaron Joseph");
@@ -55,6 +50,19 @@ class NoteServiceTest {
         note1.setDate(new Date(1));
         note1.setOwner(user1);
 
+        this.notes = new ArrayList<>();
+        this.notes.add(note1);
+        user1.setNotes(notes);
+    }
+
+    @AfterEach
+    void tearDown() {
+    }
+
+    @Test
+    void testFindByIdSuccess() {
+        Note note1 = notes.get(0);
+        //Given
         given(noteRepository.findById("1")).willReturn(Optional.of(note1));
 
         //When
@@ -84,6 +92,36 @@ class NoteServiceTest {
                 .isInstanceOf(ObjectNotFoundException.class)
                 .hasMessage("Could not find Note with Id -1");
         verify(noteRepository, times(1)).findById("-1");
+
+    }
+
+    @Test
+    void testFindAllNotesByOwnerIdSuccess() {
+        //Given
+        given(noteRepository.findAllByOwner_Id(1)).willReturn(Optional.of(notes));
+
+        //When
+        List<Note> returnedNotes = noteService.findAllByOwnerId(1);
+
+        //Then
+        assertThat(returnedNotes.size()).isEqualTo(this.notes.size());
+    }
+
+    @Test
+    void testFindAllNotesByOwnerIdNotFound() {
+        //Given
+        given(noteRepository.findAllByOwner_Id(-1)).willReturn(Optional.empty());
+
+        //When
+        Throwable thrown = catchThrowable(() -> {
+            noteService.findAllByOwnerId(-1);
+        });
+
+        //Then
+        assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
+                .hasMessage("Could not find List of Note with Id -1");
+        verify(noteRepository, times(1)).findAllByOwner_Id(-1);
 
     }
 }
