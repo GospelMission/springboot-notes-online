@@ -1,5 +1,6 @@
 package practicespringboot.notesapplicationonline.note;
 
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,11 +16,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
+import practicespringboot.notesapplicationonline.note.converter.NoteToNoteDtoConverter;
+import practicespringboot.notesapplicationonline.note.dto.NoteDto;
 import practicespringboot.notesapplicationonline.system.StatusCode;
 import practicespringboot.notesapplicationonline.system.exception.ObjectNotFoundException;
 import practicespringboot.notesapplicationonline.user.Users;
 import practicespringboot.notesapplicationonline.user.UsersRepository;
 import practicespringboot.notesapplicationonline.user.UsersService;
+import practicespringboot.notesapplicationonline.user.dto.UsersDto;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -39,8 +43,8 @@ class NoteControllerTest {
     MockMvc mockMvc;
     @MockBean
     NoteService noteService;
-
     List<Note> notes;
+    List<NoteDto> notesDto;
     @BeforeEach
     void setUp() {
         Users user1 = new Users();
@@ -62,6 +66,28 @@ class NoteControllerTest {
         this.notes = new ArrayList<>();
         this.notes.add(note1);
         user1.setNotes(notes);
+
+        UsersDto usersDto1 = new UsersDto(
+                1,
+                "Aaron Joseph",
+                "Nocon",
+                "Carillo",
+                "admin",
+                true,
+                1
+        );
+
+        NoteDto noteDto1 = new NoteDto(
+                "1",
+                "Title1",
+                "Description1",
+                note1.getDate(),
+                usersDto1
+        );
+
+        notesDto = new ArrayList<>();
+        notesDto.add(noteDto1);
+
     }
 
     @AfterEach
@@ -91,5 +117,31 @@ class NoteControllerTest {
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
                 .andExpect(jsonPath("$.message").value("Could not find Note with Id -1"));
+    }
+
+    @Test
+    void testFindAllNotesByOwnerIdSuccess() throws Exception {
+
+        //Given
+        given(this.noteService.findAllById(1)).willReturn(notes);
+
+        //When and Then
+        this.mockMvc.perform(get(this.baseUrl + "/findAllNotesByOwnerId/1").accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                .andExpect(jsonPath("$.message").value("Find All Notes By Owner Id Success"))
+                .andExpect(jsonPath("$.data[0].owner.id").value(1));
+
+    }
+    @Test
+    void testFindAllNotesByOwnerIdNotFound() throws Exception {
+        //Given
+        given(this.noteService.findAllById(-1)).willThrow(new ObjectNotFoundException(List.of(Note.class), -1));
+
+        //When and Then
+        this.mockMvc.perform(get(baseUrl + "/findAllNotesByOwnerId/-1").accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
+                .andExpect(jsonPath("$.message").value("Could not find List of Note with Id -1"));
     }
 }
