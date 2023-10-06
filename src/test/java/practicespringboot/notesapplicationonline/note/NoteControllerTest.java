@@ -20,8 +20,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.eq;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
+import practicespringboot.notesapplicationonline.note.converter.NoteDtoToNoteConverter;
 import practicespringboot.notesapplicationonline.note.converter.NoteToNoteDtoConverter;
 import practicespringboot.notesapplicationonline.note.dto.NoteDto;
 import practicespringboot.notesapplicationonline.system.StatusCode;
@@ -39,7 +39,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
@@ -54,11 +55,10 @@ class NoteControllerTest {
     @MockBean
     NoteService noteService;
     List<Note> notes;
-    List<NoteDto> notesDto;
-    Users user1;
+
     @BeforeEach
     void setUp() {
-        user1 = new Users();
+        Users user1 = new Users();
         user1.setId(1);
         user1.setFirstName("Aaron Joseph");
         user1.setMiddleName("Nocon");
@@ -77,28 +77,6 @@ class NoteControllerTest {
         this.notes = new ArrayList<>();
         this.notes.add(note1);
         user1.setNotes(notes);
-
-        UsersDto usersDto1 = new UsersDto(
-                1,
-                "Aaron Joseph",
-                "Nocon",
-                "Carillo",
-                "admin",
-                true,
-                1
-        );
-
-        NoteDto noteDto1 = new NoteDto(
-                "1",
-                "Title1",
-                "Description1",
-                note1.getDate(),
-                usersDto1
-        );
-
-        notesDto = new ArrayList<>();
-        notesDto.add(noteDto1);
-
     }
 
     @AfterEach
@@ -197,9 +175,63 @@ class NoteControllerTest {
         given(this.noteService.createNoteById(Mockito.any(Note.class), Mockito.any(Integer.class))).willThrow(new UserNotFoundException(1));
 
         //When and Then
-        this.mockMvc.perform(post(baseUrl + "/createNoteByUserId/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(post(baseUrl + "/createNoteByUserId/1")
+                        .contentType(MediaType.APPLICATION_JSON).content(json)
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
                 .andExpect(jsonPath("$.message").value("Could not find User with Id 1"));
+    }
+
+    @Test
+    void testUpdateNoteByNoteIdSuccess() throws Exception {
+        NoteDto noteDto = new NoteDto(null, "New Title", "New Description", null,null);
+        String json = objectMapper.writeValueAsString(noteDto);
+
+        Users sampleUser = new Users();
+        sampleUser.setId(1);
+        sampleUser.setFirstName("Aaron Joseph");
+        sampleUser.setMiddleName("Nocon");
+        sampleUser.setLastName("Carillo");
+        sampleUser.setPassword("@Password1");
+        sampleUser.setEnabled(true);
+        sampleUser.setRole("admin");
+
+        Note updatedNote = new Note();
+        updatedNote.setId("1");
+        updatedNote.setTitle("New Title");
+        updatedNote.setDescription("New Description");
+        updatedNote.setDate(new Date(1));
+        updatedNote.setOwner(sampleUser);
+
+        //Given
+        given(this.noteService.updateNoteById(Mockito.any(String.class), Mockito.any(Note.class))).willReturn(updatedNote);
+
+        //When and Then
+        this.mockMvc.perform(put(baseUrl + "/updateNoteByNoteId/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json).accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                .andExpect(jsonPath("$.message").value("Update Note By User Id Success"))
+                .andExpect(jsonPath("$.data.title").value("New Title"));
+
+    }
+
+    @Test
+    void testUpdateNoteByNoteIdNotFound() throws Exception {
+        NoteDto noteDto = new NoteDto(null, "New Title", "New Description", null,null);
+        String json = objectMapper.writeValueAsString(noteDto);
+
+        //Given
+        given(this.noteService.updateNoteById(Mockito.any(String.class), Mockito.any(Note.class))).willThrow(new ObjectNotFoundException(Note.class, -1));
+
+        //When and Then
+        this.mockMvc.perform(put(baseUrl + "/updateNoteByNoteId/-1")
+                        .contentType(MediaType.APPLICATION_JSON).content(json)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
+                .andExpect(jsonPath("$.message").value("Could not find Note with Id -1"));
     }
 }
