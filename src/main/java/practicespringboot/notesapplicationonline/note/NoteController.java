@@ -1,13 +1,13 @@
 package practicespringboot.notesapplicationonline.note;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import practicespringboot.notesapplicationonline.note.converter.NoteToNoteDtoConverter;
 import practicespringboot.notesapplicationonline.note.dto.NoteDto;
 import practicespringboot.notesapplicationonline.system.Result;
 import practicespringboot.notesapplicationonline.system.StatusCode;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("${api.endpoint.base-url}/notes")
@@ -27,7 +27,17 @@ public class NoteController {
     }
 
     @GetMapping("/findAllNotesByOwnerId/{ownerId}")
-    public Result findAllNotesByOwnerId(@PathVariable String ownerId) {
+    public Result findAllNotesByOwnerId(@PathVariable Integer ownerId) {
+        List<Note> returnedNotes = noteService.findAllById(ownerId);
+        List<NoteDto> notesDto = returnedNotes
+                .stream()
+                .map(noteToNoteDtoConverter::convert)
+                .toList();
+
+        return new Result(true, StatusCode.SUCCESS, "Find All Notes By Owner Id Success", notesDto);
+    }
+    @PostMapping("createNoteByUserId/{userId}")
+    public Result createNoteByUserId(Integer userId) {
         return null;
     }
 
