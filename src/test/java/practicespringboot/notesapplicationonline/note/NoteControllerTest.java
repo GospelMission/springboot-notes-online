@@ -1,11 +1,15 @@
 package practicespringboot.notesapplicationonline.note;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,12 +18,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
+import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 import practicespringboot.notesapplicationonline.note.converter.NoteToNoteDtoConverter;
 import practicespringboot.notesapplicationonline.note.dto.NoteDto;
 import practicespringboot.notesapplicationonline.system.StatusCode;
 import practicespringboot.notesapplicationonline.system.exception.ObjectNotFoundException;
+import practicespringboot.notesapplicationonline.system.exception.UserNotFoundException;
 import practicespringboot.notesapplicationonline.user.Users;
 import practicespringboot.notesapplicationonline.user.UsersRepository;
 import practicespringboot.notesapplicationonline.user.UsersService;
@@ -32,6 +39,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
@@ -41,13 +49,16 @@ class NoteControllerTest {
     String baseUrl;
     @Autowired
     MockMvc mockMvc;
+    @Autowired
+    ObjectMapper objectMapper;
     @MockBean
     NoteService noteService;
     List<Note> notes;
     List<NoteDto> notesDto;
+    Users user1;
     @BeforeEach
     void setUp() {
-        Users user1 = new Users();
+        user1 = new Users();
         user1.setId(1);
         user1.setFirstName("Aaron Joseph");
         user1.setMiddleName("Nocon");
@@ -143,5 +154,52 @@ class NoteControllerTest {
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
                 .andExpect(jsonPath("$.message").value("Could not find List of Note with Id -1"));
+    }
+
+    @Test
+    void testCreateNoteByUserIdSuccess() throws Exception {
+        NoteDto noteDto = new NoteDto(
+                null,
+                "Title1",
+                "Description1",
+                null,
+                null
+        );
+        String json = this.objectMapper.writeValueAsString(noteDto);
+
+        Note savedNote = notes.get(0);
+
+        //Given
+        given(this.noteService.createNoteById(Mockito.any(Note.class), Mockito.any(Integer.class))).willReturn(savedNote);
+
+        //When and Then
+        this.mockMvc.perform(post(baseUrl + "/createNoteByUserId/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                .andExpect(jsonPath("$.message").value("Create Note By User Id Success"))
+                .andExpect(jsonPath("$.data.title").value(savedNote.getTitle()));
+
+    }
+
+    @Test
+    void testCreateNoteByUserIdNotFound() throws Exception {
+        NoteDto noteDto = new NoteDto(
+                null,
+                "Title1",
+                "Description1",
+                null,
+                null
+        );
+
+        String json = this.objectMapper.writeValueAsString(noteDto);
+
+        //Given
+        given(this.noteService.createNoteById(Mockito.any(Note.class), Mockito.any(Integer.class))).willThrow(new UserNotFoundException(1));
+
+        //When and Then
+        this.mockMvc.perform(post(baseUrl + "/createNoteByUserId/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
+                .andExpect(jsonPath("$.message").value("Could not find User with Id 1"));
     }
 }
