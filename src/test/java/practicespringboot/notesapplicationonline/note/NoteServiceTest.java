@@ -36,13 +36,11 @@ class NoteServiceTest {
     NoteService noteService;
     @Mock
     IdWorker idWorker;
-
     List<Note> notes;
-    Users user1;
 
     @BeforeEach
     void setUp() {
-        user1 = new Users();
+        Users user1 = new Users();
         user1.setId(1);
         user1.setFirstName("Aaron Joseph");
         user1.setMiddleName("Nocon");
@@ -139,9 +137,18 @@ class NoteServiceTest {
         note2.setTitle("Title2");
         note2.setDescription("Description2");
 
+        Users sampleUser = new Users();
+        sampleUser.setId(1);
+        sampleUser.setFirstName("Aaron Joseph");
+        sampleUser.setMiddleName("Nocon");
+        sampleUser.setLastName("Carillo");
+        sampleUser.setPassword("@Password1");
+        sampleUser.setEnabled(true);
+        sampleUser.setRole("admin");
+
         //Given
         given(idWorker.nextId()).willReturn(123456L);
-        given(this.usersRepository.findById(1)).willReturn(Optional.of(user1));
+        given(this.usersRepository.findById(1)).willReturn(Optional.of(sampleUser));
         given(this.noteRepository.save(note2)).willReturn(note2);
 
         //When
@@ -150,7 +157,7 @@ class NoteServiceTest {
         //Then
         assertThat(savedNote.getTitle()).isEqualTo(note2.getTitle());
         assertThat(savedNote.getDescription()).isEqualTo(note2.getDescription());
-        assertThat(savedNote.getOwner()).isEqualTo(user1);
+        assertThat(savedNote.getOwner()).isEqualTo(sampleUser);
         verify(this.usersRepository, times(1)).findById(1);
         verify(this.noteRepository, times(1)).save(note2);
     }
@@ -170,5 +177,57 @@ class NoteServiceTest {
                 .isInstanceOf(UserNotFoundException.class)
                 .hasMessage("Could not find User with Id -1");
         verify(this.usersRepository, times(1)).findById(-1);
+    }
+
+    @Test
+    void testUpdateNoteByNoteIdSuccess() {
+        Note updateNote = new Note();
+        updateNote.setTitle("New Title");
+        updateNote.setDescription("New Description");
+
+        Users sampleUser = new Users();
+        sampleUser.setId(1);
+        sampleUser.setFirstName("Aaron Joseph");
+        sampleUser.setMiddleName("Nocon");
+        sampleUser.setLastName("Carillo");
+        sampleUser.setPassword("@Password1");
+        sampleUser.setEnabled(true);
+        sampleUser.setRole("admin");
+
+        Note foundNote = new Note();
+        foundNote.setId("1");
+        foundNote.setTitle("New Title");
+        foundNote.setDescription("New Description");
+        foundNote.setDate(new Date(1));
+        foundNote.setOwner(sampleUser);
+
+
+        //Given
+        given(this.noteRepository.findById("1")).willReturn(Optional.of(foundNote));
+        given(this.noteRepository.save(foundNote)).willReturn(foundNote);
+
+        //When
+        Note returnedNote = noteService.updateNoteById("1", updateNote);
+
+        //Then
+        assertThat(returnedNote.getTitle()).isEqualTo(foundNote.getTitle());
+        assertThat(returnedNote.getDate()).isEqualTo(foundNote.getDate());
+        verify(noteRepository, times(1)).findById("1");
+        verify(noteRepository, times(1)).save(foundNote);
+    }
+
+    @Test
+    void testUpdateNoteByNoteIdNotFound() {
+        //Given
+        given(noteRepository.findById("-1")).willThrow(new ObjectNotFoundException(Note.class, "-1"));
+
+        Throwable thrown = catchThrowable(() -> {
+           noteService.updateNoteById("-1", Mockito.any(Note.class));
+        });
+
+        assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
+                .hasMessage("Could not find Note with Id -1");
+        verify(noteRepository, times(1)).findById("-1");
     }
 }

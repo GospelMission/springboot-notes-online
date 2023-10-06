@@ -50,4 +50,16 @@ public class NoteService {
 
         return this.noteRepository.save(newNote);
     }
+
+    public Note updateNoteById(String noteId, Note updateNote) {
+        Note foundNote = noteRepository
+                .findById(noteId)
+                .orElseThrow(() -> new ObjectNotFoundException(Note.class, noteId));
+
+        foundNote.setTitle(updateNote.getTitle());
+        foundNote.setDescription(updateNote.getDescription());
+        foundNote.setDate(new Date());
+
+        return noteRepository.save(foundNote);
+    }
 }

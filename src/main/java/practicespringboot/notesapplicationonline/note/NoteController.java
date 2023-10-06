@@ -45,5 +45,12 @@ public class NoteController {
         NoteDto savedNoteDto = this.noteToNoteDtoConverter.convert(savedNote);
         return new Result(true, StatusCode.SUCCESS, "Create Note By User Id Success", savedNoteDto);
     }
+    @PutMapping("/updateNoteByNoteId/{noteId}")
+    public Result updateNoteByNoteId(@RequestBody NoteDto noteDto, @PathVariable String noteId) {
+        Note note = noteDtoToNoteConverter.convert(noteDto);
+        Note updatedNote = noteService.updateNoteById(noteId, note);
+        NoteDto updatedNoteDto = noteToNoteDtoConverter.convert(updatedNote);
+        return new Result(true, StatusCode.SUCCESS, "Update Note By User Id Success", updatedNoteDto);
+    }
 
 }
