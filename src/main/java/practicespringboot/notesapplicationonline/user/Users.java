@@ -1,9 +1,7 @@
 package practicespringboot.notesapplicationonline.user;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
 import practicespringboot.notesapplicationonline.note.Note;
 
 import java.io.Serializable;
@@ -12,11 +10,15 @@ import java.util.List;
 @Entity
 public class Users implements Serializable {
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
+    @NotEmpty(message = "email is required")
     private String email;
+    @NotEmpty(message = "firstName is required")
     private String firstName;
     private String middleName;
     private String lastName;
+    @NotEmpty(message = "password is required")
     private String password;
     private String role;
     private boolean enabled;

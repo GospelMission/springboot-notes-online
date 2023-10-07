@@ -10,6 +10,7 @@ import practicespringboot.notesapplicationonline.system.StatusCode;
 import java.util.List;
 
 @RestController
+@CrossOrigin
 @RequestMapping("${api.endpoint.base-url}/notes")
 public class NoteController {
     private final NoteService noteService;
