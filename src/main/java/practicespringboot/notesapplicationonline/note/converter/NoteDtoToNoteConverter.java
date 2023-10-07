@@ -9,7 +9,7 @@ public class NoteDtoToNoteConverter implements Converter<NoteDto, Note> {
     @Override
     public Note convert(NoteDto source) {
         Note note = new Note();
-            note.setTitle(source.description());
+            note.setTitle(source.title());
             note.setDescription(source.description());
 
         return note;
