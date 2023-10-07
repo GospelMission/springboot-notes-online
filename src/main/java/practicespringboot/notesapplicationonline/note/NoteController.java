@@ -21,13 +21,19 @@ public class NoteController {
         this.noteToNoteDtoConverter = noteToNoteDtoConverter;
         this.noteDtoToNoteConverter = noteDtoToNoteConverter;
     }
+    @PostMapping("/createNoteByUserId/{userId}")
+    public Result createNoteByUserId(@RequestBody NoteDto noteDto, @PathVariable Integer userId) {
+        Note newNote = this.noteDtoToNoteConverter.convert(noteDto);
+        Note savedNote = this.noteService.createNoteById(newNote, userId);
+        NoteDto savedNoteDto = this.noteToNoteDtoConverter.convert(savedNote);
+        return new Result(true, StatusCode.SUCCESS, "Create Note By User Id Success", savedNoteDto);
+    }
     @GetMapping("/findNoteByNoteId/{noteId}")
     public Result findNoteByNoteId(@PathVariable String noteId) {
         Note foundNote= this.noteService.findById(noteId);
         NoteDto noteDto = this.noteToNoteDtoConverter.convert(foundNote);
         return new Result(true, StatusCode.SUCCESS, "FindNoteByNoteId Success", noteDto);
     }
-
     @GetMapping("/findAllNotesByOwnerId/{ownerId}")
     public Result findAllNotesByOwnerId(@PathVariable Integer ownerId) {
         List<Note> returnedNotes = this.noteService.findAllById(ownerId);
@@ -38,19 +44,17 @@ public class NoteController {
 
         return new Result(true, StatusCode.SUCCESS, "Find All Notes By Owner Id Success", notesDto);
     }
-    @PostMapping("/createNoteByUserId/{userId}")
-    public Result createNoteByUserId(@RequestBody NoteDto noteDto, @PathVariable Integer userId) {
-        Note newNote = this.noteDtoToNoteConverter.convert(noteDto);
-        Note savedNote = this.noteService.createNoteById(newNote, userId);
-        NoteDto savedNoteDto = this.noteToNoteDtoConverter.convert(savedNote);
-        return new Result(true, StatusCode.SUCCESS, "Create Note By User Id Success", savedNoteDto);
-    }
     @PutMapping("/updateNoteByNoteId/{noteId}")
     public Result updateNoteByNoteId(@RequestBody NoteDto noteDto, @PathVariable String noteId) {
         Note note = noteDtoToNoteConverter.convert(noteDto);
         Note updatedNote = noteService.updateNoteById(noteId, note);
         NoteDto updatedNoteDto = noteToNoteDtoConverter.convert(updatedNote);
         return new Result(true, StatusCode.SUCCESS, "Update Note By User Id Success", updatedNoteDto);
+    }
+    @DeleteMapping("/deleteNoteByNoteId/{noteId}")
+    public Result deleteNoteByNoteId(@PathVariable String noteId) {
+        noteService.deleteNoteById(noteId);
+        return new Result(true, StatusCode.SUCCESS, "Delete Note By Note Id Success");
     }
 
 }

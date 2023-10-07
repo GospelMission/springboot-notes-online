@@ -39,6 +39,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -230,6 +232,30 @@ class NoteControllerTest {
         this.mockMvc.perform(put(baseUrl + "/updateNoteByNoteId/-1")
                         .contentType(MediaType.APPLICATION_JSON).content(json)
                         .accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
+                .andExpect(jsonPath("$.message").value("Could not find Note with Id -1"));
+    }
+
+    @Test
+    void testDeleteNoteByNoteIdSuccess() throws Exception {
+        //Given
+        doNothing().when(noteService).deleteNoteById("1");
+
+        //When and Then
+        this.mockMvc.perform(delete(baseUrl + "/deleteNoteByNoteId/1").accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(StatusCode.SUCCESS))
+                .andExpect(jsonPath("$.message").value("Delete Note By Note Id Success"));
+    }
+
+    @Test
+    void testDeleteNoteByNoteIdNotFound() throws Exception {
+        //Given
+        doThrow(new ObjectNotFoundException(Note.class, "-1")).when(noteService).deleteNoteById("-1");
+
+        //When and Then
+        this.mockMvc.perform(delete(baseUrl + "/deleteNoteByNoteId/-1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(StatusCode.NOT_FOUND))
                 .andExpect(jsonPath("$.message").value("Could not find Note with Id -1"));

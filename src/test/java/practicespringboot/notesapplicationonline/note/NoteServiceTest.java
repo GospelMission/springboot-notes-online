@@ -230,4 +230,54 @@ class NoteServiceTest {
                 .hasMessage("Could not find Note with Id -1");
         verify(noteRepository, times(1)).findById("-1");
     }
+
+    @Test
+    void testDeleteNoteByNoteIdSuccess() {
+        Users sampleUser = new Users();
+        sampleUser.setId(1);
+        sampleUser.setFirstName("Aaron Joseph");
+        sampleUser.setMiddleName("Nocon");
+        sampleUser.setLastName("Carillo");
+        sampleUser.setPassword("@Password1");
+        sampleUser.setEnabled(true);
+        sampleUser.setRole("admin");
+
+
+        Note foundNote = new Note();
+        foundNote.setId("1");
+        foundNote.setTitle("New Title");
+        foundNote.setDescription("New Description");
+        foundNote.setDate(new Date(1));
+        foundNote.setOwner(sampleUser);
+
+
+        //Given
+        given(noteRepository.findById("1")).willReturn(Optional.of(foundNote));
+        doNothing().when(noteRepository).delete(foundNote);
+
+        //When
+        noteService.deleteNoteById("1");
+
+        //Then
+        verify(noteRepository, times(1)).findById("1");
+        verify(noteRepository, times(1)).delete(foundNote);
+    }
+
+    @Test
+    void testDeleteNoteByNoteIdNotFound() {
+        //Given
+        given(noteRepository.findById("1")).willThrow(new ObjectNotFoundException(Note.class, "1"));
+
+        //When
+        Throwable thrown = catchThrowable(() -> {
+            noteService.deleteNoteById("1");
+        });
+
+        //Then
+        assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
+                .hasMessage("Could not find Note with Id 1");
+
+        verify(noteRepository, times(1)).findById("1");
+    }
 }

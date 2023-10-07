@@ -25,18 +25,6 @@ public class NoteService {
         this.idWorker = idWorker;
     }
 
-    public Note findById(String noteId) {
-        return noteRepository
-                .findById(noteId)
-                .orElseThrow(() -> new ObjectNotFoundException(Note.class, noteId));
-    }
-
-    public List<Note> findAllById(Integer ownerId) {
-        return noteRepository
-                .findAllByOwner_Id(ownerId)
-                .orElseThrow(() -> new ObjectNotFoundException(List.of(Note.class), ownerId));
-    }
-
     public Note createNoteById(Note newNote, Integer userId) {
         Users owner = this.usersRepository
                 .findById(userId)
@@ -51,15 +39,40 @@ public class NoteService {
         return this.noteRepository.save(newNote);
     }
 
+    public Note findById(String noteId) {
+        return noteRepository
+                .findById(noteId)
+                .orElseThrow(() -> new ObjectNotFoundException(Note.class, noteId));
+    }
+
+    public List<Note> findAllById(Integer ownerId) {
+        return noteRepository
+                .findAllByOwner_Id(ownerId)
+                .orElseThrow(() -> new ObjectNotFoundException(List.of(Note.class), ownerId));
+    }
+
     public Note updateNoteById(String noteId, Note updateNote) {
         Note foundNote = noteRepository
                 .findById(noteId)
                 .orElseThrow(() -> new ObjectNotFoundException(Note.class, noteId));
 
-        foundNote.setTitle(updateNote.getTitle());
-        foundNote.setDescription(updateNote.getDescription());
+        if(updateNote.getTitle() != null)
+            foundNote.setTitle(updateNote.getTitle());
+
+        if(updateNote.getDescription() != null)
+            foundNote.setDescription(updateNote.getDescription());
+
         foundNote.setDate(new Date());
 
         return noteRepository.save(foundNote);
     }
+
+    public void deleteNoteById(String noteId) {
+        Note foundNote = noteRepository
+                .findById(noteId)
+                .orElseThrow(() -> new ObjectNotFoundException(Note.class, noteId));
+
+        noteRepository.delete(foundNote);
+    }
+
 }
