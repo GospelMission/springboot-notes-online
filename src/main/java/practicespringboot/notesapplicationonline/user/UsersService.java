@@ -24,5 +24,5 @@ public class UsersService {
                         newUser.setEnabled(true);
                         return usersRepository.save(newUser);
                     });
-    }
+    }   
 }
